@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixed Layout ID Card Generator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tiro+Bangla&display=swap');
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e9ecef;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        /* --- Form Section --- */
+        .form-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            width: 450px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .form-container h2 { text-align: center; color: #333; margin-top: 0; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 4px; font-weight: bold; font-size: 13px; color: #444; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;
+        }
+        input[type="date"] { font-family: Arial, sans-serif; }
+        
+        .form-section-title {
+            background: #f8f9fa; padding: 8px; font-weight: bold; margin: 15px 0 10px 0; border-left: 4px solid #f2a65a; font-size: 14px;
+        }
+
+        .cards-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-content: flex-start;
+        }
+
+        /* --- STANDARD CR80 ID CARD (55mm x 86mm) --- */
+        .id-card {
+            width: 55mm;
+            height: 86mm;
+            background: #fff;
+            border: 2px solid #222;
+            border-radius: 3mm;
+            box-sizing: border-box;
+            position: relative;
+            font-family: 'Tiro Bangla', serif;
+            color: #111;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            padding: 2mm;
+        }
+
+        .card-inner {
+            border: 0.5px solid #ccc;
+            height: 100%;
+            width: 100%;
+            box-sizing: border-box;
+            position: relative;
+            background: #fff;
+        }
+
+        /* --- STRICT FIXED LAYOUT FOR FRONT CARD --- */
+        
+        /* 1. Header Area: Height 8mm */
+        .front-header {
+            height: 8mm;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 1.5mm;
+            font-size: 5.5pt;
+            color: #555;
+            box-sizing: border-box;
+        }
+        .logo-area {
+            text-align: center;
+            color: #d88a2a;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
+            font-size: 8pt;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        .logo-area img { max-width: 15mm; max-height: 6mm; object-fit: contain; }
+        .logo-area span { display: block; font-size: 10pt; line-height: 0.8;}
+        
+        /* 2. Photo Area: Height 26mm, Centered */
+        .photo-container {
+            height: 26mm;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            margin-bottom: 1mm;
+        }
+        .photo-container img {
+            width: 20mm;
+            height: 24mm;
+            border: 1px solid #aaa;
+            object-fit: cover;
+        }
+
+        /* 3. Details Area: Height 24mm - FIXED TO PREVENT OVERLAP */
+        .front-details {
+            height: 24mm;
+            padding: 0 1.5mm;
+            font-size: 7pt; /* Slightly reduced font size to fit long texts */
+            line-height: 1.3;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        .front-details div { 
+            display: flex; 
+            margin-bottom: 0.5mm; 
+            white-space: nowrap; /* FORCES TEXT TO STAY ON ONE LINE */
+        }
+        .front-details div span.label { 
+            width: 18mm; /* Increased label width to give "আই ডি কার্ড নং" enough room */
+            font-weight: bold; 
+        }
+        .front-details div span.value { 
+            flex: 1; 
+            overflow: hidden; /* Prevents long text from pushing the layout */
+            text-overflow: ellipsis; 
+        }
+
+        /* 4. Signatures Area: Height 10mm */
+        .signatures {
+            position: absolute;
+            bottom: 6.5mm; /* Fixed above footer */
+            left: 0;
+            width: 100%;
+            height: 10mm;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 2mm;
+            box-sizing: border-box;
+            font-size: 5pt;
+            font-weight: bold;
+        }
+        .sig-box {
+            width: 45%;
+            position: relative;
+            height: 100%;
+        }
+        .sig-img {
+            position: absolute;
+            bottom: 3.5mm; /* Stays fixed above the line */
+            left: 50%;
+            transform: translateX(-50%);
+            max-height: 5.5mm; /* Strict height constraint */
+            max-width: 100%;
+            object-fit: contain;
+        }
+        .sig-line {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            border-top: 0.5px dashed #555;
+            padding-top: 1mm;
+            color: #222;
+        }
+
+        /* 5. Footer Area: Height 5.5mm */
+        .front-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 5.5mm;
+            background: linear-gradient(to right, #f2a65a, #f7d57c, #f2a65a);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 6.5pt;
+            color: #5d4037;
+            box-sizing: border-box;
+        }
+
+        /* --- BACK CARD STYLES --- */
+        .back-details {
+            padding: 3mm;
+            font-size: 6pt;
+            line-height: 1.3;
+        }
+        .back-details p { margin: 1mm 0; }
+        .back-details .bold { font-weight: bold; color: #222; }
+        
+        .blood-group {
+            font-size: 8pt;
+            font-weight: bold;
+            margin: 2mm 0 !important;
+        }
+        .blood-group span { color: #d32f2f; }
+        
+        .print-btn {
+            display: block; width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: background 0.3s;
+        }
+        .print-btn:hover { background: #0056b3; }
+
+        @media print {
+            @page { size: A4; margin: 15mm; }
+            body { background: white; margin: 0; padding: 0; display: block; }
+            .form-container { display: none; }
+            .cards-container { display: flex; flex-direction: row; gap: 5mm; justify-content: flex-start; }
+            .id-card { box-shadow: none; page-break-inside: avoid; border: 1px solid #000; border-radius: 2mm; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- INPUT FORM -->
+    <div class="form-container">
+        <h2>আইডি কার্ড ডেটা ফর্ম</h2>
+        
+        <div class="form-section-title">ছবি ও লোগো আপলোড</div>
+        <div class="form-group"><label>কোম্পানির লোগো (Optional)</label><input type="file" id="inp-logo" accept="image/*"></div>
+        <div class="form-group"><label>কর্মচারীর ছবি</label><input type="file" id="inp-photo" accept="image/*"></div>
+
+        <div class="form-section-title">স্বাক্ষর আপলোড (Optional)</div>
+        <div class="form-group"><label>কর্মচারীর স্বাক্ষর</label><input type="file" id="inp-sig1" accept="image/*"></div>
+        <div class="form-group"><label>মালিক/ব্যবস্থাপকের স্বাক্ষর</label><input type="file" id="inp-sig2" accept="image/*"></div>
+
+        <div class="form-section-title">ফ্রন্ট সাইড ডেটা</div>
+        <div class="form-group"><label>টিকেট/কার্ড নং (Top Left)</label><input type="text" id="inp-top-card-no" value="৫০৫১০১৮৮"></div>
+        <div class="form-group"><label>ইস্যুর তাং (Date Picker)</label><input type="date" id="inp-issue-date" value="2025-09-11"></div>
+        <div class="form-group"><label>নাম</label><input type="text" id="inp-name" value="আব্দুল্লাহ আল মোমেন"></div>
+        <div class="form-group"><label>আই ডি কার্ড নং</label><input type="text" id="inp-id-no" value="৫০৫১০১৮৮"></div>
+        <div class="form-group"><label>পদবী</label><input type="text" id="inp-designation" value="অফিসার"></div>
+        <div class="form-group"><label>বিভাগ/শাখা</label><input type="text" id="inp-department" value="স্যাম্পল"></div>
+        <div class="form-group"><label>যোগদানের তাং (Date Picker)</label><input type="date" id="inp-join-date" value="2025-09-11"></div>
+        <div class="form-group"><label>কাজের ধরন</label><input type="text" id="inp-job-type" value="উৎপাদন"></div>
+        <div class="form-group"><label>কোম্পানির নাম</label><input type="text" id="inp-company-footer" value="মেট্রো নিটিং এন্ড ডাইং মিলস লিঃ(ফ্যাক্টরী-২)"></div>
+
+        <div class="form-section-title">ব্যাক সাইড ডেটা</div>
+        <div class="form-group"><label>মেয়াদ</label><input type="text" id="inp-validity" value="চাকুরীর মেয়াদকাল"></div>
+        <div class="form-group"><label>কারখানা/প্রতিষ্ঠানের ঠিকানা</label><input type="text" id="inp-factory-address" value="চারাৰাগ, আশুলিয়া, সাভার, ঢাকা-১৩৪১।"></div>
+        <div class="form-group"><label>টেলিফোন নং</label><input type="text" id="inp-telephone" value="০১৭৩৬২০০৫৫২"></div>
+        <div class="form-group"><label>রক্তের গ্রুপ</label><input type="text" id="inp-blood-group" value="A+ (এ পজিটিভ)"></div>
+        <div class="form-group"><label>স্থায়ী ঠিকানা</label><textarea id="inp-permanent-address" rows="3">গ্রামঃ নাগপুর ডাকঘরঃ হাটশিরা বাজার, থানাঃ নান্দাইল
+জেলাঃ ময়মনসিংহ</textarea></div>
+        <div class="form-group"><label>জরুরি যোগাযোগের ফোন নম্বর</label><input type="text" id="inp-emergency-phone" value="০১৭০৮৫৬৫৫০০"></div>
+        <div class="form-group"><label>জাতীয় পরিচয়পত্র নং</label><input type="text" id="inp-nid" value="১০২৭৫৮৫৪২৯"></div>
+
+        <button class="print-btn" onclick="window.print()">🖨️ Print to A4 PDF</button>
+    </div>
+
+    <!-- CARD PREVIEW AREA -->
+    <div class="cards-container">
+        
+        <!-- FRONT CARD -->
+        <div class="id-card">
+            <div class="card-inner">
+                <div class="front-header">
+                    <div>টিকেট/কার্ড নং: <span id="out-top-card-no">৫০৫১০১৮৮</span></div>
+                    <div class="logo-area">
+                        <img id="out-logo" src="" alt="Logo" style="display: none;">
+                        <div id="out-logo-text"><span>///</span>panam</div>
+                    </div>
+                    <div>ইস্যুর তাং <span id="out-issue-date">১১/০৯/২০২৫</span></div>
+                </div>
+
+                <div class="photo-container">
+                    <img id="out-photo" src="https://via.placeholder.com/150x180?text=Photo" alt="Employee Photo">
+                </div>
+
+                <div class="front-details">
+                    <div><span class="label">নাম:</span> <span class="value" id="out-name">আব্দুল্লাহ আল মোমেন</span></div>
+                    <div><span class="label">আই ডি কার্ড নং :</span> <span class="value" id="out-id-no">৫০৫১০১৮৮</span></div>
+                    <div><span class="label">পদবী:</span> <span class="value" id="out-designation">অফিসার</span></div>
+                    <div><span class="label">বিভাগ/শাখা:</span> <span class="value" id="out-department">স্যাম্পল</span></div>
+                    <div><span class="label">যোগদানের তাং:</span> <span class="value" id="out-join-date">১১/০৯/২০২৫ইং</span></div>
+                    <div><span class="label">কাজের ধরন:</span> <span class="value" id="out-job-type">উৎপাদন</span></div>
+                </div>
+
+                <div class="signatures">
+                    <div class="sig-box">
+                        <img id="out-sig1" class="sig-img" src="" style="display: none;">
+                        <div class="sig-line">স্বাক্ষর</div>
+                    </div>
+                    <div class="sig-box">
+                        <img id="out-sig2" class="sig-img" src="" style="display: none;">
+                        <div class="sig-line">স্বাক্ষর মালিক /ব্যবস্থাপক</div>
+                    </div>
+                </div>
+
+                <div class="front-footer" id="out-company-footer">
+                    মেট্রো নিটিং এন্ড ডাইং মিলস লিঃ(ফ্যাক্টরী-২)
+                </div>
+            </div>
+        </div>
+
+        <!-- BACK CARD -->
+        <div class="id-card">
+            <div class="card-inner">
+                <div class="back-details">
+                    <p class="bold">মেয়াদ: <span style="font-weight:normal;" id="out-validity">চাকুরীর মেয়াদকাল</span></p>
+                    <p class="bold">কারখানা/প্রতিষ্ঠানের ঠিকানা:</p>
+                    <p id="out-factory-address">চারাৰাগ, আশুলিয়া, সাভার, ঢাকা-১৩৪১।</p>
+                    <p class="bold" style="margin-top:2mm;">টেলিফোন নং: &nbsp;&nbsp;&nbsp; <span style="font-weight:normal; font-size:7.5pt;" id="out-telephone">০১৭৩৬২০০৫৫২</span></p>
+                    <p style="margin-top:2.5mm; font-size: 5.5pt;">উক্ত পরিচয়পত্র হারাইয়া গেলে তাৎক্ষনিক<br>ব্যবস্থাপনা কর্তৃপক্ষকে জানাইতে হইবে।</p>
+                    <p class="blood-group">রক্তের গ্রুপ: &nbsp;&nbsp;&nbsp; <span id="out-blood-group">A+ (এ পজিটিভ)</span></p>
+                    <p class="bold">স্থায়ী ঠিকানা:</p>
+                    <p id="out-permanent-address" style="white-space: pre-line;">গ্রামঃ নাগপুর ডাকঘরঃ হাটশিরা বাজার, থানাঃ নান্দাইল
+জেলাঃ ময়মনসিংহ</p>
+                    <p class="bold" style="margin-top:2.5mm;">জরুরি যোগাযোগের ফোন নম্বর:</p>
+                    <p id="out-emergency-phone">০১৭০৮৫৬৫৫০০</p>
+                    <p class="bold" style="margin-top:2mm;">জাতীয় পরিচয়পত্র নং:</p>
+                    <p id="out-nid">১০২৭৫৮৫৪২৯</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        function bindData(inputId, outputId) {
+            document.getElementById(inputId).addEventListener('input', function() {
+                document.getElementById(outputId).innerText = this.value;
+            });
+        }
+
+        bindData('inp-top-card-no', 'out-top-card-no');
+        bindData('inp-name', 'out-name');
+        bindData('inp-id-no', 'out-id-no');
+        bindData('inp-designation', 'out-designation');
+        bindData('inp-department', 'out-department');
+        bindData('inp-job-type', 'out-job-type');
+        bindData('inp-company-footer', 'out-company-footer');
+        
+        bindData('inp-validity', 'out-validity');
+        bindData('inp-factory-address', 'out-factory-address');
+        bindData('inp-telephone', 'out-telephone');
+        bindData('inp-blood-group', 'out-blood-group');
+        bindData('inp-permanent-address', 'out-permanent-address');
+        bindData('inp-emergency-phone', 'out-emergency-phone');
+        bindData('inp-nid', 'out-nid');
+
+        const engToBngNumbers = { '0':'০','1':'১','2':'২','3':'৩','4':'৪','5':'৫','6':'৬','7':'৭','8':'৮','9':'৯' };
+        
+        function formatToBengaliDate(dateString) {
+            if (!dateString) return '';
+            const parts = dateString.split('-');
+            const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; 
+            return formattedDate.split('').map(char => engToBngNumbers[char] || char).join('');
+        }
+
+        document.getElementById('inp-issue-date').addEventListener('change', function() {
+            document.getElementById('out-issue-date').innerText = formatToBengaliDate(this.value);
+        });
+
+        document.getElementById('inp-join-date').addEventListener('change', function() {
+            document.getElementById('out-join-date').innerText = formatToBengaliDate(this.value) + 'ইং';
+        });
+
+        function setupImageUpload(inputId, imgId, textIdToHide = null) {
+            document.getElementById(inputId).addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const imageUrl = URL.createObjectURL(file);
+                    const imgElement = document.getElementById(imgId);
+                    imgElement.src = imageUrl;
+                    imgElement.style.display = 'block'; 
+                    
+                    if (textIdToHide) {
+                        document.getElementById(textIdToHide).style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        setupImageUpload('inp-photo', 'out-photo');
+        setupImageUpload('inp-logo', 'out-logo', 'out-logo-text');
+        setupImageUpload('inp-sig1', 'out-sig1');
+        setupImageUpload('inp-sig2', 'out-sig2');
+
+    </script>
+</body>
+</html>
